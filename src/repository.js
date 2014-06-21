@@ -137,6 +137,7 @@ window.Repo = (function(){
     Repo.version = function(){
         return "Repo.js v0.1 - https://github.com/phalpin/Repo.js";
     }
+
     //endregion
 
 
@@ -154,7 +155,12 @@ window.Repo = (function(){
     //region "Private" Methods
     function privateMethods(){
         return{
-            //Notifies observers that a change has been made.
+            /**
+             * Notifies observers that a change has been made to the repository.
+             * @param obs Observers array to alert.
+             * @param item Item changed
+             * @param mode Mode to alert (Repo.mode.Added, Repo.mode.Removed, etc.)
+             */
             notifyObservers: function(obs, item, mode){
                 for(var o in obs){
                     obs[o](item, mode);
@@ -260,6 +266,56 @@ window.Repo = (function(){
                         }
                     }
                 }
+            },
+
+            /**
+             * Gets the value of key on a particular object.
+             * @param item Item to get value from
+             * @param key Path to follow: (item.info.metadata.id, or just id)
+             * @returns {*} Either null or the value at the key.
+             */
+            getValueAtKey: function(item, key){
+                var keypath = key.split('.');
+                var depth = item;
+
+                for(var i = 0; i<keypath.length; i++){
+                    if(depth[keypath[i]] != null){
+                        depth = depth[keypath[i]];
+                    }
+                    else{
+                        return null;
+                    }
+                }
+
+                return depth;
+            },
+
+            /**
+             * Finds an item by a particular key & value in a collection.
+             * @param key Key to check for (item.info.metadata.id supported)
+             * @param value Value to look for.
+             * @param collection Collection to check in.
+             * @returns {Array} results for the search.
+             */
+            findInCollection: function(key, value, collection){
+                var result = [];
+
+                for(var i in collection){
+                    if(this.getValueAtKey(collection[i], key) === value){
+                        result.push(collection[i]);
+                    }
+                }
+
+                return result;
+            },
+
+            findInObject: function(value, obj, settings){
+                if(settings.indexBy != null){
+                    return obj[value];
+                }
+                else{
+                    return null;
+                }
             }
         }
     }
@@ -339,7 +395,6 @@ window.Repo = (function(){
             return guid;
         },
 
-
         /**
          * Method to modify an item within the Repo. Stopgap for the moment til observe is a proper thing.
          * @param item Item to modify.
@@ -348,6 +403,50 @@ window.Repo = (function(){
         modify: function(item, callback){
             callback(item);
             this.modified.push(item);
+        },
+
+        /**
+         * Method to find an object in the repo - one or two arguments; if two, specify the key. If one, we will search based on indexBy
+         * @param key Key to search on
+         * @param value Value to look for.
+         */
+        find: function(key, value){
+            var p = new privateMethods();
+
+            if(arguments.length === 2){
+                if(Repo.isArray(value)){
+                    var results = [];
+                    //TODO: Change this up, make a union function to reduce duplicates
+                    for(var i=0; i<value.length; i++){
+                        results = results.concat(p.findInCollection(key, value[i], this));
+                    }
+                    return results;
+                }
+                else{
+                    return p.findInCollection(key, value, this);
+                }
+
+            }
+            else if (arguments.length === 1){
+                if(this.settings != null){
+                    if(this.settings.indexBy != null){
+                        if(Repo.isArray(key)){
+                            var results = [];
+                            for(var i=0; i<key.length; i++){
+                                results.push(p.findInObject(key[i], this.indexed, this.settings));
+                            }
+                            return results;
+                        }
+                        else{
+                            return p.findInObject(key, this.indexed, this.settings);
+                        }
+
+                    }
+                }
+            }
+            else{
+                logger.error("You must provide either an index to search on and a value, or use the settings' indexBy parameter.");
+            }
         }
     };
     //endregion
