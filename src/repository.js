@@ -36,6 +36,21 @@ window.Repo = (function(){
     //region Constructor
     function Repo(settings){
 
+        //region Preload Methodology (if localStorage support is opted)
+        if(settings != null){
+            if(settings.name != null){
+                if(settings.useLocalStorage === true){
+                    var res = Repo.loadFromLocalStorage(settings.name);
+                    if(res != null){
+                        if(res.indexed != null && res.added != null){
+                            return res;
+                        }
+                    }
+                }
+            }
+        }
+        //endregion
+
         var repo = Object.create( Array.prototype );
 
         //region Settings removal from Array Instantiation
@@ -58,6 +73,8 @@ window.Repo = (function(){
         repo.observers = {};
 
         repo.settings = settings || {
+            name: null,
+            useLocalStorage: false,
             indexBy:null,
             saveMethod:function(item, saveMode, repoRequesting){
                 console.info("No Save Method Specified!");
@@ -136,7 +153,27 @@ window.Repo = (function(){
      */
     Repo.version = function(){
         return "Repo.js v0.1 - https://github.com/phalpin/Repo.js";
-    }
+    };
+
+    /**
+     * Loads a repo from localstorage.
+     * @param name Name to check for.
+     * @returns {*}
+     */
+    Repo.loadFromLocalStorage = function(name){
+        if(localStorage != null){
+            var key = priv.getLocalStorageKey(name);
+            var res = localStorage.getItem(key);
+            if(res != null){
+                return JSON.parse(res);
+            }
+            else{
+                logger.warn("Repo not found: " + name, "Key Used: " + key);
+            }
+
+            return null;
+        }
+    };
 
     //endregion
 
@@ -308,6 +345,13 @@ window.Repo = (function(){
             return result;
         },
 
+        /**
+         * Finds an item by a particular value in an object.
+         * @param value
+         * @param obj
+         * @param settings
+         * @returns {*}
+         */
         findInObject: function(value, obj, settings){
             if(settings.indexBy != null){
                 return obj[value];
@@ -315,8 +359,50 @@ window.Repo = (function(){
             else{
                 return null;
             }
+        },
+
+        /**
+         * Formats the key to use for this repo for localStorage.
+         * @param name name of the repo
+         * @returns {string}
+         */
+        getLocalStorageKey: function(name){
+            return 'repo-' + document.domain + '-' + name;
+        },
+
+        /**
+         * Saves a repo to local storage.
+         * @param repo Repo to save.
+         */
+        saveToLocalStorage: function(repo){
+            if(localStorage != null){
+                if(repo.settings != null){
+                    if(repo.settings.useLocalStorage === true){
+                        if(repo.settings.name != null){
+                            var key = this.getLocalStorageKey(repo.settings.name);
+                            localStorage.setItem(key, JSON.stringify(repo));
+                            logger.info("Saved repo to localStorage with key " + key);
+                        }
+                        else{
+                            logger.warn("Repository requires a name to persist to localStorage!");
+                        }
+                    }
+                }
+            }
+            else{
+
+            }
         }
     };
+    //endregion
+
+
+    //region TODO: Figure out a proper pseudo-threading strategy - gonna have to split up into separate segments as the repos get large
+    function Thread(ref, func){
+        this.start = function(){
+            setTimeout(func.apply(ref), 0);
+        }
+    }
     //endregion
 
 
@@ -436,6 +522,30 @@ window.Repo = (function(){
             else{
                 logger.error("You must provide either an index to search on and a value, or use the settings' indexBy parameter.");
             }
+        },
+
+        /**
+         * Reindexes this Repo.
+         */
+        reindex: function(){
+            this.indexed = {};
+            for(var i=0; i<this.length; i++){
+                /*
+                var t = new Thread(this, function(){
+                    priv.checkAndAddToIndex(this[i], this.indexed, this.settings);
+                });
+                t.start();
+                */
+                priv.checkAndAddToIndex(this[i], this.indexed, this.settings);
+
+            }
+        },
+
+        /**
+         * Persists the repo in localStorage (maybe set up SQLite in the future?)
+         */
+        persist: function(){
+            priv.saveToLocalStorage(this);
         }
     };
     //endregion

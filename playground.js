@@ -1,7 +1,10 @@
 /**
  * Created by phalpin on 6/20/14.
  */
+
+
 var
+    testName = "TestRepo",
     objAmount = 5000,
     testIndex = "test.id",
     batchCreate = true,
@@ -10,7 +13,9 @@ var
 ;
 
 var r = new Repo({
+    name: testName,
     indexBy: testIndex,
+    useLocalStorage: true,
     createInBatch: batchCreate,
     updateInBatch: batchUpdate,
     deleteInBatch: batchDelete,
@@ -76,3 +81,14 @@ runSpeedTests("Non-Indexed Multi-Find", r, 'find', ["name", ["Test Object 25", "
 
 runSpeedTests("Deep Key Non-Indexed Find", r, 'find', ["deep.key.find.target.val.will.be.something.like", 25]);
 runSpeedTests("Deep Key Non-Indexed Multi-Find", r, 'find', ["deep.key.find.target.val.will.be.something.like", [25,26,27,28,29,30]]);
+
+runSpeedTests("Reindex of Repo", r, 'reindex', []);
+
+runSpeedTests("Persistence to localStorage", r, 'persist', []);
+
+
+var s = new Repo({
+    name: testName,
+    indexBy: testIndex,
+    useLocalStorage: true
+});
