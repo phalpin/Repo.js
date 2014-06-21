@@ -153,172 +153,170 @@ window.Repo = (function(){
 
 
     //region "Private" Methods
-    function privateMethods(){
-        return{
-            /**
-             * Notifies observers that a change has been made to the repository.
-             * @param obs Observers array to alert.
-             * @param item Item changed
-             * @param mode Mode to alert (Repo.mode.Added, Repo.mode.Removed, etc.)
-             */
-            notifyObservers: function(obs, item, mode){
-                for(var o in obs){
-                    obs[o](item, mode);
+    var priv = {
+        /**
+         * Notifies observers that a change has been made to the repository.
+         * @param obs Observers array to alert.
+         * @param item Item changed
+         * @param mode Mode to alert (Repo.mode.Added, Repo.mode.Removed, etc.)
+         */
+        notifyObservers: function(obs, item, mode){
+            for(var o in obs){
+                obs[o](item, mode);
+            }
+        },
+
+        /**
+         * Moves objects out of the saved/modified/etc lists.
+         * @param collection
+         * @param settings
+         * @param mode
+         * @param inBatch
+         */
+        moveOut: function(collection, settings, mode, inBatch){
+            if(inBatch === true){
+                var result = settings.saveMethod(collection, mode, this) || [];
+
+                //TODO: Fix this - this won't work within a loop like this, first splice and we're screwed.
+                for(var i=0; i<result.length; i++){
+                    collection.splice(result[i], 1);
                 }
-            },
+            }
+            else{
 
-            /**
-             * Moves objects out of the saved/modified/etc lists.
-             * @param collection
-             * @param settings
-             * @param mode
-             * @param inBatch
-             */
-            moveOut: function(collection, settings, mode, inBatch){
-                if(inBatch === true){
-                    var result = settings.saveMethod(collection, mode, this) || [];
-
-                    //TODO: Fix this - this won't work within a loop like this, first splice and we're screwed.
-                    for(var i=0; i<result.length; i++){
-                        collection.splice(result[i], 1);
+                //TODO: Fix this as well.
+                for(var i=0; i<collection.length; i++){
+                    if(settings.saveMethod(collection[i], mode, this)){
+                        collection.splice(i, 1);
                     }
                 }
-                else{
+            }
+        },
 
-                    //TODO: Fix this as well.
-                    for(var i=0; i<collection.length; i++){
-                        if(settings.saveMethod(collection[i], mode, this)){
-                            collection.splice(i, 1);
-                        }
-                    }
-                }
-            },
+        //From SlavikMe: http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+        /**
+         * Creates a guid
+         * @returns {*}
+         */
+        createGuid: function(){
+            function _p8(s) {
+                var p = (Math.random().toString(16)+"000000000").substr(2,8);
+                return s ? "-" + p.substr(0,4) + "-" + p.substr(4,4) : p ;
+            }
+            return _p8() + _p8(true) + _p8(true) + _p8();
+        },
 
-            //From SlavikMe: http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-            /**
-             * Creates a guid
-             * @returns {*}
-             */
-            createGuid: function(){
-                function _p8(s) {
-                    var p = (Math.random().toString(16)+"000000000").substr(2,8);
-                    return s ? "-" + p.substr(0,4) + "-" + p.substr(4,4) : p ;
-                }
-                return _p8() + _p8(true) + _p8(true) + _p8();
-            },
+        /**
+         * Returns whether or not a property is a supported index type.
+         * @param item item to check
+         */
+        isPropertySupportedIndexType: function(item){
+            var retVal = true;
+            var supportedTypes = ["string", "number"];
 
-            /**
-             * Returns whether or not a property is a supported index type.
-             * @param item item to check
-             */
-            isPropertySupportedIndexType: function(item){
-                var retVal = true;
-                var supportedTypes = ["string", "number"];
+            for(var i in supportedTypes){
+                retVal |= typeof item === supportedTypes[i];
+            }
+            return !!(retVal & (item != null));
+        },
 
-                for(var i in supportedTypes){
-                    retVal |= typeof item === supportedTypes[i];
-                }
-                return !!(retVal & (item != null));
-            },
+        /**
+         * Checks whether an item has a property to index by!
+         * @param item Item to check
+         * @param indexBy Property to check (supports "person.details.id")
+         * @returns {boolean}
+         */
+        checkObjectHasIndex: function(item, indexBy){
+            var path = indexBy.split('.');
+            var depth = item;
+            for(var i=0; i<path.length; i++){
+                if(depth[path[i]] == null) return false;
+                depth = depth[path[i]];
+            }
 
-            /**
-             * Checks whether an item has a property to index by!
-             * @param item Item to check
-             * @param indexBy Property to check (supports "person.details.id")
-             * @returns {boolean}
-             */
-            checkObjectHasIndex: function(item, indexBy){
-                var path = indexBy.split('.');
-                var depth = item;
-                for(var i=0; i<path.length; i++){
-                    if(depth[path[i]] == null) return false;
-                    depth = depth[path[i]];
-                }
-
-                if(this.isPropertySupportedIndexType(depth) === true){
-                    return depth;
-                }
-            },
-
-            /**
-             * Checks an item, and if it has a valid property to index, add it to the index.
-             * @param item Item to check & add
-             * @param indexObject Index string to check for.
-             * @param settings Settings object to read from (for indexBy)
-             */
-            checkAndAddToIndex: function(item, indexObject, settings){
-                if(settings != null){
-                    if(settings.indexBy != null){
-                        var index = this.checkObjectHasIndex(item, settings.indexBy);
-                        if(index !== false){
-                            if(Repo.isArray(indexObject[index])){
-                                indexObject[index].push(item);
-                            }
-                            else if(indexObject[index] != null){
-                                var arr = [];
-                                arr.push(indexObject[index])
-                                arr.push(item);
-                                indexObject[index] = arr;
-                            }
-                            else{
-                                indexObject[index] = item;
-                            }
-                        }
-                    }
-                }
-            },
-
-            /**
-             * Gets the value of key on a particular object.
-             * @param item Item to get value from
-             * @param key Path to follow: (item.info.metadata.id, or just id)
-             * @returns {*} Either null or the value at the key.
-             */
-            getValueAtKey: function(item, key){
-                var keypath = key.split('.');
-                var depth = item;
-
-                for(var i = 0; i<keypath.length; i++){
-                    if(depth[keypath[i]] != null){
-                        depth = depth[keypath[i]];
-                    }
-                    else{
-                        return null;
-                    }
-                }
-
+            if(this.isPropertySupportedIndexType(depth) === true){
                 return depth;
-            },
+            }
+        },
 
-            /**
-             * Finds an item by a particular key & value in a collection.
-             * @param key Key to check for (item.info.metadata.id supported)
-             * @param value Value to look for.
-             * @param collection Collection to check in.
-             * @returns {Array} results for the search.
-             */
-            findInCollection: function(key, value, collection){
-                var result = [];
-
-                for(var i in collection){
-                    if(this.getValueAtKey(collection[i], key) === value){
-                        result.push(collection[i]);
+        /**
+         * Checks an item, and if it has a valid property to index, add it to the index.
+         * @param item Item to check & add
+         * @param indexObject Index string to check for.
+         * @param settings Settings object to read from (for indexBy)
+         */
+        checkAndAddToIndex: function(item, indexObject, settings){
+            if(settings != null){
+                if(settings.indexBy != null){
+                    var index = this.checkObjectHasIndex(item, settings.indexBy);
+                    if(index !== false){
+                        if(Repo.isArray(indexObject[index])){
+                            indexObject[index].push(item);
+                        }
+                        else if(indexObject[index] != null){
+                            var arr = [];
+                            arr.push(indexObject[index])
+                            arr.push(item);
+                            indexObject[index] = arr;
+                        }
+                        else{
+                            indexObject[index] = item;
+                        }
                     }
                 }
+            }
+        },
 
-                return result;
-            },
+        /**
+         * Gets the value of key on a particular object.
+         * @param item Item to get value from
+         * @param key Path to follow: (item.info.metadata.id, or just id)
+         * @returns {*} Either null or the value at the key.
+         */
+        getValueAtKey: function(item, key){
+            var keypath = key.split('.');
+            var depth = item;
 
-            findInObject: function(value, obj, settings){
-                if(settings.indexBy != null){
-                    return obj[value];
+            for(var i = 0; i<keypath.length; i++){
+                if(depth[keypath[i]] != null){
+                    depth = depth[keypath[i]];
                 }
                 else{
                     return null;
                 }
             }
+
+            return depth;
+        },
+
+        /**
+         * Finds an item by a particular key & value in a collection.
+         * @param key Key to check for (item.info.metadata.id supported)
+         * @param value Value to look for.
+         * @param collection Collection to check in.
+         * @returns {Array} results for the search.
+         */
+        findInCollection: function(key, value, collection){
+            var result = [];
+
+            for(var i in collection){
+                if(this.getValueAtKey(collection[i], key) === value){
+                    result.push(collection[i]);
+                }
+            }
+
+            return result;
+        },
+
+        findInObject: function(value, obj, settings){
+            if(settings.indexBy != null){
+                return obj[value];
+            }
+            else{
+                return null;
+            }
         }
-    }
+    };
     //endregion
 
 
@@ -330,10 +328,6 @@ window.Repo = (function(){
          */
         push: function( value ){
             logger.info("Push Request: ", arguments);
-
-            var p = privateMethods();
-
-
             for (var i=0; i<arguments.length; i++){
                 var arg = arguments[i];
 
@@ -343,16 +337,16 @@ window.Repo = (function(){
                         for(var j=0; j<arg.length; j++){
                             this._push(arg[j]);
                             this.added.push(arg[j]);
-                            p.checkAndAddToIndex(arg[j], this.indexed, this.settings);
-                            p.notifyObservers(this.observers, arg[j], Repo.mode.Added);
+                            priv.checkAndAddToIndex(arg[j], this.indexed, this.settings);
+                            priv.notifyObservers(this.observers, arg[j], Repo.mode.Added);
                         }
                         break;
                     case false:
                     default:
                         this._push(arg);
                         this.added.push(arg);
-                        p.checkAndAddToIndex(arg, this.indexed, this.settings);
-                        p.notifyObservers(this.observers, arg, Repo.mode.Added);
+                        priv.checkAndAddToIndex(arg, this.indexed, this.settings);
+                        priv.notifyObservers(this.observers, arg, Repo.mode.Added);
                         break;
                 }
             }
@@ -367,15 +361,13 @@ window.Repo = (function(){
          * Applies all changes - Adds, Modifications, Deletions.
          */
         save: function(){
-            var p = privateMethods();
-
             if(this.settings.saveMethod != null){
                 //Added Items
-                p.moveOut(this.added, this.settings, Repo.mode.Create, this.settings.createInBatch);
+                priv.moveOut(this.added, this.settings, Repo.mode.Create, this.settings.createInBatch);
                 //Modified Items
-                p.moveOut(this.modified, this.settings, Repo.mode.Update, this.settings.updateInBatch);
+                priv.moveOut(this.modified, this.settings, Repo.mode.Update, this.settings.updateInBatch);
                 //Deleted Items
-                p.moveOut(this.deleted, this.settings, Repo.mode.Delete, this.settings.deleteInBatch);
+                priv.moveOut(this.deleted, this.settings, Repo.mode.Delete, this.settings.deleteInBatch);
             }
             else{
                 logger.error("No save method specified - allocate a method to me.settings.saveMethod.");
@@ -388,9 +380,7 @@ window.Repo = (function(){
          * @returns {*}
          */
         observe: function(callback){
-            var p = privateMethods();
-
-            var guid = p.createGuid();
+            var guid = priv.createGuid();
             this.observers[guid] = callback;
             return guid;
         },
@@ -411,19 +401,18 @@ window.Repo = (function(){
          * @param value Value to look for.
          */
         find: function(key, value){
-            var p = new privateMethods();
 
             if(arguments.length === 2){
                 if(Repo.isArray(value)){
                     var results = [];
                     //TODO: Change this up, make a union function to reduce duplicates
                     for(var i=0; i<value.length; i++){
-                        results = results.concat(p.findInCollection(key, value[i], this));
+                        results = results.concat(priv.findInCollection(key, value[i], this));
                     }
                     return results;
                 }
                 else{
-                    return p.findInCollection(key, value, this);
+                    return priv.findInCollection(key, value, this);
                 }
 
             }
@@ -433,12 +422,12 @@ window.Repo = (function(){
                         if(Repo.isArray(key)){
                             var results = [];
                             for(var i=0; i<key.length; i++){
-                                results.push(p.findInObject(key[i], this.indexed, this.settings));
+                                results.push(priv.findInObject(key[i], this.indexed, this.settings));
                             }
                             return results;
                         }
                         else{
-                            return p.findInObject(key, this.indexed, this.settings);
+                            return priv.findInObject(key, this.indexed, this.settings);
                         }
 
                     }
