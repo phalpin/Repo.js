@@ -1,30 +1,30 @@
-//region Repository Class
+//region Repo Class
 //Methodology Adapted from http://www.bennadel.com/blog/2292-extending-javascript-arrays-while-keeping-native-bracket-notation-functionality.htm
-window.Repository = (function(){
+window.Repo = (function(){
 
     //region Debug
     var debug = true & (window.console != null);
 
     var logging = function(){
         this.warn = function(){
-            console.warn("Repository.js: ", arguments);
-        }
+            console.warn("Repo.js: ", arguments);
+        };
 
         this.info = function(){
             if(debug === true){
-                console.info("Repository.js: ", arguments);
+                console.info("Repo.js: ", arguments);
             }
-        }
+        };
 
         this.log = function(){
             if(debug === true){
-                console.log("Repository.js: ", arguments);
+                console.log("Repo.js: ", arguments);
             }
-        }
+        };
 
         this.error = function(){
-            console.error("Repository.js: ", arguments);
-        }
+            console.error("Repo.js: ", arguments);
+        };
 
 
         return this;
@@ -34,7 +34,7 @@ window.Repository = (function(){
 
 
     //region Constructor
-    function Repository(settings){
+    function Repo(settings){
 
         var repo = Object.create( Array.prototype );
 
@@ -62,15 +62,6 @@ window.Repository = (function(){
             saveMethod:function(item, saveMode, repoRequesting){
                 console.info("No Save Method Specified!");
                 console.info("Item: ", item, "SaveMode: ", saveMode, "repoRequesting: ", repoRequesting);
-                switch(saveMode){
-                    case Repository.mode.Create:
-                        return true;
-                        break;
-                    case Repository.mode.Update:
-                        break;
-                    case Repository.mode.Delete:
-                        break;
-                }
             },
             createInBatch: false,
             updateInBatch: false,
@@ -79,7 +70,7 @@ window.Repository = (function(){
         //endregion
 
         // Add all the class methods to the repo.
-        Repository.injectClassMethods(repo);
+        Repo.injectClassMethods(repo);
 
         // Return the new repo object.
         return(repo);
@@ -89,15 +80,15 @@ window.Repository = (function(){
 
 
     //region Static Methods
-    Repository.injectClassMethods = function(repo){
+    Repo.injectClassMethods = function(repo){
 
         // Loop over all the prototype methods and add them to the new repo.
-        for (var method in Repository.prototype){
+        for (var method in Repo.prototype){
             // Make sure this is a local method.
-            if (Repository.prototype.hasOwnProperty(method)){
+            if (Repo.prototype.hasOwnProperty(method)){
 
                 // Add the method to the repo.
-                repo[method] = Repository.prototype[method];
+                repo[method] = Repo.prototype[method];
 
             }
 
@@ -105,15 +96,18 @@ window.Repository = (function(){
 
         // Return the updated repo.
         return(repo);
-
     };
 
 
-    // I create a new repo from the given array.
-    Repository.fromArray = function( array ){
+    /**
+     * Creates a new repository from a given array.
+     * @param array Array to convert into a repository.
+     * @returns {*}
+     */
+    Repo.fromArray = function(array){
 
         // Create a new repo.
-        var repo = Repository.apply( null, array );
+        var repo = Repo.apply( null, array );
 
         // Return the new repo.
         return(repo);
@@ -121,8 +115,12 @@ window.Repository = (function(){
     };
 
 
-    // I determine if the given object is an array.
-    Repository.isArray = function( value ){
+    /**
+     * Determines whether an object is an array.
+     * @param value item to check.
+     * @returns {boolean}
+     */
+    Repo.isArray = function(value){
 
         // Get it's stringified version.
         var stringValue = Object.prototype.toString.call( value );
@@ -131,17 +129,25 @@ window.Repository = (function(){
         return( stringValue.toLowerCase() === "[object array]" );
 
     };
+
+    /**
+     * Returns the version of Repo.js
+     * @returns {string}
+     */
+    Repo.version = function(){
+        return "Repo.js v0.1 - https://github.com/phalpin/Repo.js";
+    }
     //endregion
 
 
     //region Enumerables
-    Repository.mode = {};
-    Repository.mode.Create = 0;
-    Repository.mode.Read = 1;
-    Repository.mode.Update = 2;
-    Repository.mode.Delete = 3;
-    Repository.mode.Added = 4;
-    Repository.mode.Removed = 5;
+    Repo.mode = {};
+    Repo.mode.Create = 0;
+    Repo.mode.Read = 1;
+    Repo.mode.Update = 2;
+    Repo.mode.Delete = 3;
+    Repo.mode.Added = 4;
+    Repo.mode.Removed = 5;
     //endregion
 
 
@@ -193,6 +199,67 @@ window.Repository = (function(){
                     return s ? "-" + p.substr(0,4) + "-" + p.substr(4,4) : p ;
                 }
                 return _p8() + _p8(true) + _p8(true) + _p8();
+            },
+
+            /**
+             * Returns whether or not a property is a supported index type.
+             * @param item item to check
+             */
+            isPropertySupportedIndexType: function(item){
+                var retVal = true;
+                var supportedTypes = ["string", "number"];
+
+                for(var i in supportedTypes){
+                    retVal |= typeof item === supportedTypes[i];
+                }
+                return !!(retVal & (item != null));
+            },
+
+            /**
+             * Checks whether an item has a property to index by!
+             * @param item Item to check
+             * @param indexBy Property to check (supports "person.details.id")
+             * @returns {boolean}
+             */
+            checkObjectHasIndex: function(item, indexBy){
+                var path = indexBy.split('.');
+                var depth = item;
+                for(var i=0; i<path.length; i++){
+                    if(depth[path[i]] == null) return false;
+                    depth = depth[path[i]];
+                }
+
+                if(this.isPropertySupportedIndexType(depth) === true){
+                    return depth;
+                }
+            },
+
+            /**
+             * Checks an item, and if it has a valid property to index, add it to the index.
+             * @param item Item to check & add
+             * @param indexObject Index string to check for.
+             * @param settings Settings object to read from (for indexBy)
+             */
+            checkAndAddToIndex: function(item, indexObject, settings){
+                if(settings != null){
+                    if(settings.indexBy != null){
+                        var index = this.checkObjectHasIndex(item, settings.indexBy);
+                        if(index !== false){
+                            if(Repo.isArray(indexObject[index])){
+                                indexObject[index].push(item);
+                            }
+                            else if(indexObject[index] != null){
+                                var arr = [];
+                                arr.push(indexObject[index])
+                                arr.push(item);
+                                indexObject[index] = arr;
+                            }
+                            else{
+                                indexObject[index] = item;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -200,10 +267,10 @@ window.Repository = (function(){
 
 
     //region "Public" Methods
-    Repository.prototype = {
+    Repo.prototype = {
         /**
          * Method to use good ol' push.
-         * @returns {Repository}
+         * @returns {Repo}
          */
         push: function( value ){
             logger.info("Push Request: ", arguments);
@@ -215,26 +282,28 @@ window.Repository = (function(){
                 var arg = arguments[i];
 
                 //Handle arrays and such.
-                switch(Repository.isArray(arg)){
+                switch(Repo.isArray(arg)){
                     case true:
                         for(var j=0; j<arg.length; j++){
                             this._push(arg[j]);
                             this.added.push(arg[j]);
-                            p.notifyObservers(this.observers, arg[j], Repository.mode.Added);
+                            p.checkAndAddToIndex(arg[j], this.indexed, this.settings);
+                            p.notifyObservers(this.observers, arg[j], Repo.mode.Added);
                         }
                         break;
                     case false:
                     default:
                         this._push(arg);
                         this.added.push(arg);
-                        p.notifyObservers(this.observers, arg, Repository.mode.Added);
+                        p.checkAndAddToIndex(arg, this.indexed, this.settings);
+                        p.notifyObservers(this.observers, arg, Repo.mode.Added);
                         break;
                 }
             }
 
             logger.info("Added State: ", this.added);
 
-            return( this );
+            return(this);
         },
 
         /**
@@ -246,11 +315,11 @@ window.Repository = (function(){
 
             if(this.settings.saveMethod != null){
                 //Added Items
-                p.moveOut(this.added, this.settings, Repository.mode.Create, this.settings.createInBatch);
+                p.moveOut(this.added, this.settings, Repo.mode.Create, this.settings.createInBatch);
                 //Modified Items
-                p.moveOut(this.modified, this.settings, Repository.mode.Update, this.settings.updateInBatch);
+                p.moveOut(this.modified, this.settings, Repo.mode.Update, this.settings.updateInBatch);
                 //Deleted Items
-                p.moveOut(this.deleted, this.settings, Repository.mode.Delete, this.settings.deleteInBatch);
+                p.moveOut(this.deleted, this.settings, Repo.mode.Delete, this.settings.deleteInBatch);
             }
             else{
                 logger.error("No save method specified - allocate a method to me.settings.saveMethod.");
@@ -272,7 +341,7 @@ window.Repository = (function(){
 
 
         /**
-         * Method to modify an item within the Repository. Stopgap for the moment til observe is a proper thing.
+         * Method to modify an item within the Repo. Stopgap for the moment til observe is a proper thing.
          * @param item Item to modify.
          * @param callback Function to modify it with.
          */
@@ -285,7 +354,7 @@ window.Repository = (function(){
 
 
     // Return the repo constructor.
-    return(Repository);
+    return(Repo);
 
 
 }).call( {} );
