@@ -32,18 +32,38 @@ window.Repo = (function(){
     var logger = new logging();
     //endregion
 
+    var defaultSettings = {
+        name: null,
+        useLocalStorage: false,
+        indexBy:null,
+        saveMethod:function(item, saveMode, repoRequesting){
+            console.info("No Save Method Specified!");
+            console.info("Item: ", item, "SaveMode: ", saveMode, "repoRequesting: ", repoRequesting);
+        },
+        createInBatch: false,
+        updateInBatch: false,
+        deleteInBatch: false
+    };
+
 
     //region Constructor
-    function Repo(settings){
+    function Repo(settings, skip){
+
+        var stg = settings;
+        var skp = skip;
+
+        var shouldSkip = skp === true;
 
         //region Preload Methodology (if localStorage support is opted)
-        if(settings != null){
-            if(settings.name != null){
-                if(settings.useLocalStorage === true){
-                    var res = Repo.loadFromLocalStorage(settings.name);
-                    if(res != null){
-                        if(res.indexed != null && res.added != null){
-                            return res;
+        if(stg != null){
+            if(stg.name != null){
+                if(stg.useLocalStorage === true){
+                    if(skip !== true){
+                        var res = Repo.loadFromLocalStorage(settings.name);
+                        if(res != null){
+                            if(res.indexed != null && res.added != null){
+                                return res;
+                            }
                         }
                     }
                 }
@@ -57,6 +77,9 @@ window.Repo = (function(){
         var shift = [].shift;
         var args = arguments;
         if(args.length > 0) shift.apply(args);
+        if(shouldSkip === true){
+            shift.apply(args);
+        }
         //endregion
 
 
@@ -72,18 +95,7 @@ window.Repo = (function(){
         repo.indexed = {};
         repo.observers = {};
 
-        repo.settings = settings || {
-            name: null,
-            useLocalStorage: false,
-            indexBy:null,
-            saveMethod:function(item, saveMode, repoRequesting){
-                console.info("No Save Method Specified!");
-                console.info("Item: ", item, "SaveMode: ", saveMode, "repoRequesting: ", repoRequesting);
-            },
-            createInBatch: false,
-            updateInBatch: false,
-            deleteInBatch: false
-        };
+        repo.settings = stg || defaultSettings;
         //endregion
 
         // Add all the class methods to the repo.
@@ -122,13 +134,11 @@ window.Repo = (function(){
      * @returns {*}
      */
     Repo.fromArray = function(array){
-
-        // Create a new repo.
-        var repo = Repo.apply( null, array );
-
-        // Return the new repo.
+        var repo = new Repo(null, true);
+        for(var i=0;i<array.length;i++){
+            repo._push(array[i]);
+        }
         return(repo);
-
     };
 
 
@@ -165,7 +175,7 @@ window.Repo = (function(){
             var key = priv.getLocalStorageKey(name);
             var res = localStorage.getItem(key);
             if(res != null){
-                return JSON.parse(res);
+                return priv.fromLocalStorageString(res);
             }
             else{
                 logger.warn("Repo not found: " + name, "Key Used: " + key);
@@ -380,7 +390,7 @@ window.Repo = (function(){
                     if(repo.settings.useLocalStorage === true){
                         if(repo.settings.name != null){
                             var key = this.getLocalStorageKey(repo.settings.name);
-                            localStorage.setItem(key, JSON.stringify(repo));
+                            localStorage.setItem(key, this.toLocalStorageObject(repo));;
                             logger.info("Saved repo to localStorage with key " + key);
                         }
                         else{
@@ -392,6 +402,42 @@ window.Repo = (function(){
             else{
 
             }
+        },
+
+        /**
+         * Creates a localStorage compatible string for this repo.
+         * @param repo Repo to create localStorage compatible string from
+         * @returns {*}
+         */
+        toLocalStorageObject: function(repo){
+            var resultObj = {};
+            var items = [];
+
+            //Get the repo prototyped items.
+            resultObj.added = repo.added;
+            resultObj.modified = repo.modified;
+            resultObj.deleted = repo.deleted;
+            resultObj.indexed = repo.indexed;
+
+            //Get the actual items in the repo.
+            items = items.concat(repo);
+            resultObj.items = items;
+            return JSON.stringify(resultObj);
+        },
+
+        /**
+         * Parses a string from localStorage to get a compatible object for it, returns a fully formatted repo.
+         * @param str string from localStorage to parse.
+         * @returns {*}
+         */
+        fromLocalStorageString: function(str){
+            var obj = JSON.parse(str);
+            var ret = Repo.fromArray(obj.items);
+            ret.added = obj.added;
+            ret.modified = obj.modified;
+            ret.deleted = obj.deleted;
+            ret.indexed = obj.indexed;
+            return ret;
         }
     };
     //endregion

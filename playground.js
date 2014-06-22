@@ -40,9 +40,13 @@ r.observe(function(i, mode){
             break;
     }
 });
-for(var i=0; i<objAmount; i++){
-    r.push(new Item(i));
+
+if(r.length === 0){
+    for(var i=0; i<objAmount; i++){
+        r.push(new Item(i));
+    }
 }
+
 
 function Item(num){
     return{
@@ -89,6 +93,8 @@ runSpeedTests("Persistence to localStorage", r, 'persist', []);
 
 var s = new Repo({
     name: testName,
-    indexBy: testIndex,
     useLocalStorage: true
 });
+
+
+localStorage.clear();
