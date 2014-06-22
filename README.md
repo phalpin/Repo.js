@@ -11,17 +11,20 @@ Repo.js will keep track of your changes, call .save() to go to your callback for
 Settings:
 ```javascript
 var r = new Repo({
-    indexBy: testIndex,                 //What key to index on
-    createInBatch: batchCreate,         //Whether to fire back a collection of items or one item at a time
-    updateInBatch: batchUpdate,         //Same, but for updates.
-    deleteInBatch: batchDelete,         //Same, but for deletions
+    indexBy: "id",                      //What key to index on
+    createInBatch: true,                //Whether to fire back a collection of items or one item at a time
+    updateInBatch: false,               //Same, but for updates.
+    deleteInBatch: false,               //Same, but for deletions
     saveMethod: function(item, mode){   //Method to fire upon calling .save()
         switch(mode){
             case Repo.mode.Create:
+                //Creation Logic
                 break;
             case Repo.mode.Update:
+                //Update Logic
                 break;
             case Repo.mode.Delete:
+                //Deletion Logic
                 break;
         }
     }
