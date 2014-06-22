@@ -35,6 +35,7 @@ var r = new Repo({
 In the Pipeline:
 
 - [ ] Automated localStorage persistence
+- [ ] Extension to forEach to indicate saved/edited metadata in addition to key -> value
 - [ ] Automated watches for modifications
 - [ ] Routine polling for index updates
 - [ ] WebWorker support for reindexing all repositories
