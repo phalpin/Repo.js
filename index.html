@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Repo.js : Object repository built on top of Javascript native arrays" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Repo.js</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/phalpin/Repo.js">View on GitHub</a>
+
+          <h1 id="project_title">Repo.js</h1>
+          <h2 id="project_tagline">Object repository built on top of Javascript native arrays</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/phalpin/Repo.js/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/phalpin/Repo.js/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="repojs" class="anchor" href="#repojs"><span class="octicon octicon-link"></span></a>Repo.js</h1>
+
+<p>A little project to make your life storing collections in javascript a little easier!</p>
+
+<p>Usage:</p>
+
+<p>Like an array! push objects to it, make modifications to objects, etc.</p>
+
+<p>Repo.js will keep track of your changes, call .save() to go to your callback for saving/updating/removing/etc!</p>
+
+<p>Settings:</p>
+
+<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">r</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Repo</span><span class="p">({</span>
+    <span class="nx">name</span><span class="o">:</span> <span class="s2">"Contacts"</span><span class="p">,</span>                   <span class="c1">//The name of the repo</span>
+    <span class="nx">useLocalStorage</span><span class="o">:</span> <span class="kc">true</span>               <span class="c1">//Whether or not to utilize localStorage when calling persist()</span>
+    <span class="nx">indexBy</span><span class="o">:</span> <span class="s2">"id"</span><span class="p">,</span>                      <span class="c1">//What key to index on</span>
+    <span class="nx">createInBatch</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>                <span class="c1">//Whether to fire back a collection of items or one item at a time</span>
+    <span class="nx">updateInBatch</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>               <span class="c1">//Same, but for updates.</span>
+    <span class="nx">deleteInBatch</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>               <span class="c1">//Same, but for deletions</span>
+    <span class="nx">saveMethod</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">item</span><span class="p">,</span> <span class="nx">mode</span><span class="p">){</span>   <span class="c1">//Method to fire upon calling .save()</span>
+        <span class="k">switch</span><span class="p">(</span><span class="nx">mode</span><span class="p">){</span>
+            <span class="k">case</span> <span class="nx">Repo</span><span class="p">.</span><span class="nx">mode</span><span class="p">.</span><span class="nx">Create</span><span class="o">:</span>
+                <span class="c1">//Creation Logic</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="nx">Repo</span><span class="p">.</span><span class="nx">mode</span><span class="p">.</span><span class="nx">Update</span><span class="o">:</span>
+                <span class="c1">//Update Logic</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="nx">Repo</span><span class="p">.</span><span class="nx">mode</span><span class="p">.</span><span class="nx">Delete</span><span class="o">:</span>
+                <span class="c1">//Deletion Logic</span>
+                <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<p>In the Pipeline:</p>
+
+<ul>
+<li>[X] <a href="https://github.com/phalpin/Repo.js/commit/4c8cf2d7d1315e93d092a0a4116840b77b6f8d3b"><del>Automated localStorage persistence</del></a>
+</li>
+<li>[ ] Extension to forEach to indicate saved/edited metadata in addition to key -&gt; value</li>
+<li>[ ] Automated watches for modifications</li>
+<li>[ ] Routine polling for index updates</li>
+<li>[ ] WebWorker support for reindexing all repositories</li>
+<li>[ ] linq-style queries against the repository.</li>
+</ul>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Repo.js maintained by <a href="https://github.com/phalpin">phalpin</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
