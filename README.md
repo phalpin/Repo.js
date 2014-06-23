@@ -34,7 +34,7 @@ var r = new Repo({
 
 In the Pipeline:
 
-- [X] [~~Automated localStorage persistence~~](https://github.com/phalpin/Repo.js/commit/7a3d81dc75be0848401aa2c765066724cbc3c3c4)
+- [X] [~~Automated localStorage persistence~~](https://github.com/phalpin/Repo.js/commit/4c8cf2d7d1315e93d092a0a4116840b77b6f8d3b)
 - [ ] Extension to forEach to indicate saved/edited metadata in addition to key -> value
 - [ ] Automated watches for modifications
 - [ ] Routine polling for index updates
