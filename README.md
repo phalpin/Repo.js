@@ -11,6 +11,8 @@ Repo.js will keep track of your changes, call .save() to go to your callback for
 Settings:
 ```javascript
 var r = new Repo({
+    name: "Contacts",                   //The name of the repo
+    useLocalStorage: true               //Whether or not to utilize localStorage when calling persist()
     indexBy: "id",                      //What key to index on
     createInBatch: true,                //Whether to fire back a collection of items or one item at a time
     updateInBatch: false,               //Same, but for updates.
