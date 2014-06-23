@@ -62,7 +62,7 @@ function Item(num){
                             will:{
                                 be:{
                                     something:{
-                                        like: num
+                                        like: num + 1
                                     }
                                 }
                             }
@@ -90,11 +90,10 @@ runSpeedTests("Reindex of Repo", r, 'reindex', []);
 
 runSpeedTests("Persistence to localStorage", r, 'persist', []);
 
+runSpeedTests("Resetting index to Deep-Key", r, 'setIndex', ["deep.key.find.target.val.will.be.something.like"]);
+
 
 var s = new Repo({
     name: testName,
     useLocalStorage: true
 });
-
-
-localStorage.clear();

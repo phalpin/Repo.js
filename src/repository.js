@@ -49,16 +49,11 @@ window.Repo = (function(){
     //region Constructor
     function Repo(settings, skip){
 
-        var stg = settings;
-        var skp = skip;
-
-        var shouldSkip = skp === true;
-
         //region Preload Methodology (if localStorage support is opted)
-        if(stg != null){
-            if(stg.name != null){
-                if(stg.useLocalStorage === true){
-                    if(skip !== true){
+        if(skip !== true){
+            if(settings != null){
+                if(settings.name != null){
+                    if(settings.useLocalStorage === true){
                         var res = Repo.loadFromLocalStorage(settings.name);
                         if(res != null){
                             if(res.indexed != null && res.added != null){
@@ -69,21 +64,10 @@ window.Repo = (function(){
                 }
             }
         }
+
         //endregion
 
         var repo = Object.create( Array.prototype );
-
-        //region Settings removal from Array Instantiation
-        var shift = [].shift;
-        var args = arguments;
-        if(args.length > 0) shift.apply(args);
-        if(shouldSkip === true){
-            shift.apply(args);
-        }
-        //endregion
-
-
-        repo = (Array.apply(repo, args) || repo);
 
         //Reassign push to _push, maintain compatibility.
         repo._push = repo.push;
@@ -95,7 +79,7 @@ window.Repo = (function(){
         repo.indexed = {};
         repo.observers = {};
 
-        repo.settings = stg || defaultSettings;
+        repo.settings = settings || defaultSettings;
         //endregion
 
         // Add all the class methods to the repo.
@@ -538,6 +522,7 @@ window.Repo = (function(){
                 if(Repo.isArray(value)){
                     var results = [];
                     //TODO: Change this up, make a union function to reduce duplicates
+                    //TODO: Check array values as well, speed up this process a bit (check against a collection instead of one at a time per collection)
                     for(var i=0; i<value.length; i++){
                         results = results.concat(priv.findInCollection(key, value[i], this));
                     }
@@ -592,6 +577,17 @@ window.Repo = (function(){
          */
         persist: function(){
             priv.saveToLocalStorage(this);
+        },
+
+        /**
+         * Changes the index to a different value provided in the function call.
+         * @param newIndex new key value to apply indexing on (item.info.id.metadata.blah supported);
+         */
+        setIndex: function(newIndex){
+            this.indexed = {};
+            this.settings = this.settings == null ? {} : this.settings;
+            this.settings.indexBy = newIndex;
+            this.reindex();
         }
     };
     //endregion

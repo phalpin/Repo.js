@@ -46,6 +46,6 @@ function runSpeedTests(name, obj, func, args){
 
     console.log("Speed Test: " + name);
     console.log("Result:", output);
-    console.log("Time Statistics (ms):", time);
+    console.log("Time Statistics (ms) [Avg:" +time.Average+ "] [Min:" +time.Min+ "] [Max:" +time.Max +"]");
     console.log("");
 }
