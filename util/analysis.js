@@ -1,12 +1,4 @@
-/**
- * Runs a set of speed tests against a particular function.
- * @param name Name of test
- * @param obj Object to run from the scope of
- * @param func String name of the function to execute.
- * @param args Arguments (array) to send to the function.
- */
-function runSpeedTests(name, obj, func, args){
-    var runs = 20;
+function runSpeedTests(name, runs, func){
     var start, elapsed, output;
     var times = [];
 
@@ -15,6 +7,11 @@ function runSpeedTests(name, obj, func, args){
         Max: 0,
         Min: 0
     };
+
+    if(arguments.length == 2){
+        func = runs;
+        runs = 20;
+    }
 
 
     function calculateTimes(){
@@ -32,7 +29,7 @@ function runSpeedTests(name, obj, func, args){
     function runTests(){
         for(var i=0; i<runs; i++){
             start = new Date();
-            output = obj[func].apply(obj, args);
+            output = func();
             elapsed = new Date() - start;
             times.push(elapsed);
         }
@@ -49,3 +46,4 @@ function runSpeedTests(name, obj, func, args){
     console.log("Time Statistics (ms) [Avg:" +time.Average+ "] [Min:" +time.Min+ "] [Max:" +time.Max +"]");
     console.log("");
 }
+

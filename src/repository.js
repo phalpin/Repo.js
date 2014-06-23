@@ -57,6 +57,7 @@ window.Repo = (function(){
                         var res = Repo.loadFromLocalStorage(settings.name);
                         if(res != null){
                             if(res.indexed != null && res.added != null){
+                                logger.info("Loaded repository from localStorage with key: " + settings.name);
                                 return res;
                             }
                         }
@@ -68,6 +69,7 @@ window.Repo = (function(){
         //endregion
 
         var repo = Object.create( Array.prototype );
+        repo = (Array.apply(repo, []) || repo);
 
         //Reassign push to _push, maintain compatibility.
         repo._push = repo.push;
@@ -402,6 +404,7 @@ window.Repo = (function(){
             resultObj.modified = repo.modified;
             resultObj.deleted = repo.deleted;
             resultObj.indexed = repo.indexed;
+            resultObj.settings = repo.settings;
 
             //Get the actual items in the repo.
             items = items.concat(repo);
@@ -421,6 +424,7 @@ window.Repo = (function(){
             ret.modified = obj.modified;
             ret.deleted = obj.deleted;
             ret.indexed = obj.indexed;
+            ret.settings = obj.settings;
             return ret;
         }
     };

@@ -2,7 +2,6 @@
  * Created by phalpin on 6/20/14.
  */
 
-
 var
     testName = "TestRepo",
     objAmount = 5000,
@@ -74,23 +73,51 @@ function Item(num){
     }
 }
 
+runSpeedTests("Indexed Find", function(){
+    return r.find(25);
+});
 
-runSpeedTests("Indexed Find", r, 'find', [25]);
-runSpeedTests("Non-indexed Find", r, 'find', ["name", "Test Object 25"]);
+runSpeedTests("Non-indexed Find", function(){
+    return r.find("name", "Test Object 25");
+});
+
+runSpeedTests("Indexed Multi-Find", function(){
+    return r.find([25,26,27,28,29,30]);
+});
+
+runSpeedTests("Non-Indexed Multi-Find", function(){
+    return r.find("name", ["Test Object 25", "Test Object 26", "Test Object 27", "Test Object 28", "Test Object 29", "Test Object 30"]);
+});
+
+runSpeedTests("Deep Key Non-Indexed Find", function(){
+    return r.find("deep.key.find.target.val.will.be.something.like", 25);
+});
+
+runSpeedTests("Deep Key Non-Indexed Multi-Find", function(){
+    return r.find("deep.key.find.target.val.will.be.something.like", [25,26,27,28,29,30]);
+})
+
+runSpeedTests("Reindex of Repo", function(){
+    return r.reindex();
+})
+
+runSpeedTests("Persistence to localStorage", function(){
+   return r.persist();
+});
+
+runSpeedTests("Resetting index to Deep-Key", function(){
+    return r.setIndex("deep.key.find.target.val.will.be.something.like");
+});
+
+runSpeedTests("Deep Key Indexed Find", function(){
+    return r.find(25);
+});
+
+runSpeedTests("Deep Key Indexed Mutli-Find", function(){
+    return r.find([25,26,27,28,29,30]);
+})
 
 
-runSpeedTests("Indexed Multi-Find", r, 'find', [[25,26,27,28,29,30]]);
-runSpeedTests("Non-Indexed Multi-Find", r, 'find', ["name", ["Test Object 25", "Test Object 26", "Test Object 27", "Test Object 28", "Test Object 29", "Test Object 30"]]);
-
-
-runSpeedTests("Deep Key Non-Indexed Find", r, 'find', ["deep.key.find.target.val.will.be.something.like", 25]);
-runSpeedTests("Deep Key Non-Indexed Multi-Find", r, 'find', ["deep.key.find.target.val.will.be.something.like", [25,26,27,28,29,30]]);
-
-runSpeedTests("Reindex of Repo", r, 'reindex', []);
-
-runSpeedTests("Persistence to localStorage", r, 'persist', []);
-
-runSpeedTests("Resetting index to Deep-Key", r, 'setIndex', ["deep.key.find.target.val.will.be.something.like"]);
 
 
 var s = new Repo({
